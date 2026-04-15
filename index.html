@@ -6,6 +6,117 @@
 <title>Rebecca CarLog</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- PWA / Home Screen Icon -->
+<script>
+(function() {
+  // Genera icona SVG Toyota Aygo come canvas e la imposta come apple-touch-icon
+  const canvas = document.createElement('canvas');
+  canvas.width = 180; canvas.height = 180;
+  const ctx = canvas.getContext('2d');
+
+  // Sfondo celestiale
+  ctx.fillStyle = '#4a7fa5';
+  ctx.beginPath();
+  ctx.roundRect(0, 0, 180, 180, 32);
+  ctx.fill();
+
+  // Carrozzeria macchina (Aygo compatta)
+  ctx.fillStyle = '#ffffff';
+  // Base corpo
+  ctx.beginPath();
+  ctx.roundRect(20, 95, 140, 42, 10);
+  ctx.fill();
+
+  // Tettuccio
+  ctx.beginPath();
+  ctx.moveTo(50, 95);
+  ctx.lineTo(65, 62);
+  ctx.lineTo(115, 62);
+  ctx.lineTo(130, 95);
+  ctx.closePath();
+  ctx.fill();
+
+  // Finestrino sx
+  ctx.fillStyle = '#a8d4f0';
+  ctx.beginPath();
+  ctx.moveTo(55, 93);
+  ctx.lineTo(67, 67);
+  ctx.lineTo(88, 67);
+  ctx.lineTo(88, 93);
+  ctx.closePath();
+  ctx.fill();
+
+  // Finestrino dx
+  ctx.beginPath();
+  ctx.moveTo(92, 93);
+  ctx.lineTo(92, 67);
+  ctx.lineTo(113, 67);
+  ctx.lineTo(125, 93);
+  ctx.closePath();
+  ctx.fill();
+
+  // Divisore finestrini
+  ctx.fillStyle = '#4a7fa5';
+  ctx.fillRect(89, 65, 4, 30);
+
+  // Ruota sx
+  ctx.fillStyle = '#2a3a4a';
+  ctx.beginPath();
+  ctx.arc(52, 140, 18, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#aac8e0';
+  ctx.beginPath();
+  ctx.arc(52, 140, 10, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(52, 140, 5, 0, Math.PI*2);
+  ctx.fill();
+
+  // Ruota dx
+  ctx.fillStyle = '#2a3a4a';
+  ctx.beginPath();
+  ctx.arc(128, 140, 18, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#aac8e0';
+  ctx.beginPath();
+  ctx.arc(128, 140, 10, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(128, 140, 5, 0, Math.PI*2);
+  ctx.fill();
+
+  // Faro anteriore
+  ctx.fillStyle = '#ffe090';
+  ctx.beginPath();
+  ctx.roundRect(148, 102, 14, 10, 4);
+  ctx.fill();
+
+  // Faro posteriore
+  ctx.fillStyle = '#ff8080';
+  ctx.beginPath();
+  ctx.roundRect(18, 102, 14, 10, 4);
+  ctx.fill();
+
+  // Testo "AYGO"
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 13px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('AYGO', 90, 30);
+
+  // Imposta come link icona
+  const dataUrl = canvas.toDataURL('image/png');
+  const link = document.createElement('link');
+  link.rel = 'apple-touch-icon';
+  link.href = dataUrl;
+  document.head.appendChild(link);
+
+  // Salva per uso topbar
+  window._carIconUrl = dataUrl;
+})();
+</script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -200,7 +311,7 @@ canvas { max-height: 200px; }
   <div class="topbar-logo">Rebecca <span>CarLog</span></div>
   <div class="car-photo-btn" onclick="document.getElementById('carPhotoInput').click()" title="Foto macchina">
     <img id="carPhotoImg" alt="">
-    <span id="carPhotoIcon">🚗</span>
+    <span id="carPhotoIcon"><img id="aygoIcon" style="width:100%;height:100%;object-fit:contain;padding:4px;" alt="Aygo"></span>
   </div>
   <input type="file" id="carPhotoInput" accept="image/*" style="display:none" onchange="loadCarPhoto(event)">
 </div>
@@ -694,6 +805,10 @@ function showToast(msg) {
 // INIT
 const savedPhoto=localStorage.getItem('carlog_photo');
 if (savedPhoto) showCarPhoto(savedPhoto);
+else if (window._carIconUrl) {
+  const ai = document.getElementById('aygoIcon');
+  if (ai) ai.src = window._carIconUrl;
+}
 renderDashboard();
 renderStorico();
 </script>
