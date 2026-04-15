@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebecca CarLog</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #e8eef4;
+  --surface: #ffffff;
+  --border: #d0dce8;
+  --text: #1e2d3d;
+  --text2: #5a7a92;
+  --text3: #8faab8;
+  --blue: #4a7fa5;
+  --blue-light: #ddeaf4;
+  --orange: #c49a5a;
+  --orange-light: #f5ead8;
+  --green: #4a9680;
+  --green-light: #d4ede7;
+  --red: #c06060;
+  --red-light: #f5dede;
+  --purple: #7a72b0;
+  --purple-light: #e4e2f4;
+}
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* TOPBAR */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-menu { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 4px; padding: 4px; }
+.topbar-menu span { display: block; width: 20px; height: 2px; background: var(--text2); border-radius: 2px; }
+.topbar-logo { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+.topbar-logo span { color: var(--blue); }
+.car-photo-btn {
+  margin-left: auto;
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  border: 2px dashed var(--border);
+  background: var(--bg);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+  transition: border-color 0.2s;
+}
+.car-photo-btn:hover { border-color: var(--blue); }
+.car-photo-btn img { width: 100%; height: 100%; object-fit: cover; display: none; }
+
+/* SIDEBAR */
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; }
+.sidebar-overlay.open { display: block; }
+.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 260px;
+  background: #111827; z-index: 101;
+  transform: translateX(-100%);
+  transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+  display: flex; flex-direction: column; padding: 0 0 24px;
+}
+.sidebar.open { transform: translateX(0); }
+.sidebar-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.sidebar-brand { display: flex; align-items: center; gap: 10px; }
+.sidebar-icon-wrap { width: 36px; height: 36px; background: #4a7fa5; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.sidebar-brand-name { font-size: 15px; font-weight: 700; color: #fff; }
+.sidebar-close { background: none; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 2px 6px; }
+.sidebar-nav { padding: 16px 12px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 10px; cursor: pointer;
+  color: #9ca3af; font-size: 14px; font-weight: 500;
+  border: none; background: none; width: 100%; text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+.nav-item:hover { background: rgba(255,255,255,0.06); color: #e5e7eb; }
+.nav-item.active { background: var(--blue); color: #fff; }
+.nav-icon { font-size: 17px; width: 22px; text-align: center; }
+.sidebar-footer { padding: 12px 20px 0; border-top: 1px solid rgba(255,255,255,0.08); color: #4b5563; font-size: 11px; }
+
+/* MAIN */
+.main { padding: 20px 16px 80px; max-width: 600px; margin: 0 auto; }
+.page { display: none; }
+.page.active { display: block; }
+.page-title { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+.page-sub { font-size: 13px; color: var(--text2); margin-bottom: 22px; }
+
+/* STAT CARDS */
+.cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+.card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+.card-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; line-height: 1.5; }
+.card-icon { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.icon-blue { background: var(--blue-light); }
+.icon-orange { background: var(--orange-light); }
+.icon-green { background: var(--green-light); }
+.icon-purple { background: var(--purple-light); }
+.card-value { font-size: 22px; font-weight: 800; letter-spacing: -0.8px; line-height: 1; margin-bottom: 4px; }
+.card-sub { font-size: 12px; color: var(--text2); }
+.card-trend-up { font-size: 12px; color: var(--red); font-weight: 600; margin-top: 5px; }
+.card-trend-down { font-size: 12px; color: var(--green); font-weight: 600; margin-top: 5px; }
+
+/* CHART CARDS */
+.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 14px; }
+.chart-card-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+.donut-wrap { display: flex; flex-direction: column; align-items: center; }
+.donut-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 16px; justify-content: center; }
+.legend-item { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+canvas { max-height: 200px; }
+
+/* FORM */
+.form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 14px; }
+.form-section-title { font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+.field input, .field select {
+  width: 100%; padding: 12px 14px;
+  border: 1.5px solid var(--border); border-radius: 10px;
+  font-family: 'Inter', sans-serif; font-size: 14px; color: var(--text);
+  background: var(--bg); outline: none; transition: border-color 0.2s;
+}
+.field input:focus, .field select:focus { border-color: var(--blue); background: #fff; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.btn-primary {
+  width: 100%; padding: 14px; background: var(--blue); color: #fff;
+  border: none; border-radius: 10px;
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+}
+.btn-primary:hover { opacity: 0.92; }
+.btn-primary:active { transform: scale(0.98); }
+
+/* STORICO */
+.storico-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.storico-info { font-size: 13px; color: var(--text2); font-weight: 500; }
+.toolbar-actions { display: flex; gap: 8px; }
+.btn-sm {
+  font-size: 12px; font-weight: 600; padding: 7px 12px;
+  border-radius: 8px; border: 1.5px solid var(--border);
+  background: var(--surface); cursor: pointer; color: var(--text2);
+  transition: all 0.15s;
+}
+.btn-sm:hover { border-color: var(--blue); color: var(--blue); }
+.btn-sm.danger:hover { border-color: var(--red); color: var(--red); }
+.btn-sm.success { color: var(--green); border-color: var(--green); }
+
+.entry-list { display: flex; flex-direction: column; gap: 10px; }
+.entry-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.entry-icon { width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.entry-body { flex: 1; min-width: 0; }
+.entry-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.entry-meta { font-size: 12px; color: var(--text2); }
+.entry-consumi { font-size: 11px; color: var(--green); font-weight: 600; margin-top: 3px; }
+.entry-right { text-align: right; flex-shrink: 0; }
+.entry-cost { font-size: 15px; font-weight: 700; }
+.entry-delete { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; padding: 4px; border-radius: 6px; transition: color 0.15s; flex-shrink: 0; }
+.entry-delete:hover { color: var(--red); }
+.empty-state { text-align: center; padding: 48px 20px; color: var(--text3); }
+.empty-state .es-icon { font-size: 40px; margin-bottom: 10px; }
+.empty-state .es-text { font-size: 14px; }
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #111827; color: #fff;
+  font-size: 13px; font-weight: 600;
+  padding: 12px 22px; border-radius: 50px;
+  z-index: 200; white-space: nowrap;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <button class="topbar-menu" onclick="toggleSidebar()">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="topbar-logo">Rebecca <span>CarLog</span></div>
+  <div class="car-photo-btn" onclick="document.getElementById('carPhotoInput').click()" title="Foto macchina">
+    <img id="carPhotoImg" alt="">
+    <span id="carPhotoIcon">🚗</span>
+  </div>
+  <input type="file" id="carPhotoInput" accept="image/*" style="display:none" onchange="loadCarPhoto(event)">
+</div>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">
+      <div class="sidebar-icon-wrap">🚗</div>
+      <div class="sidebar-brand-name">Rebecca CarLog</div>
+    </div>
+    <button class="sidebar-close" onclick="closeSidebar()">×</button>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="nav-item active" onclick="goTo('dashboard',this)">
+      <span class="nav-icon">📊</span> Dashboard
+    </button>
+    <button class="nav-item" onclick="goTo('benzina',this)">
+      <span class="nav-icon">⛽</span> Benzina
+    </button>
+    <button class="nav-item" onclick="goTo('manutenzione',this)">
+      <span class="nav-icon">🔧</span> Manutenzione
+    </button>
+    <button class="nav-item" onclick="goTo('storico',this)">
+      <span class="nav-icon">📋</span> Storico
+    </button>
+    <button class="nav-item" onclick="goTo('backup',this)">
+      <span class="nav-icon">💾</span> Backup
+    </button>
+  </nav>
+  <div class="sidebar-footer">Registro Spese Veicolo</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-title">Dashboard</div>
+    <div class="page-sub">Panoramica delle spese e statistiche veicolo</div>
+
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-top">
+          <div class="card-label">Questo<br>Mese</div>
+          <div class="card-icon icon-blue">💳</div>
+        </div>
+        <div class="card-value" id="d-mese">€ 0</div>
+        <div class="card-sub">Spesa totale</div>
+        <div id="d-mese-trend" style="display:none"></div>
+      </div>
+      <div class="card">
+        <div class="card-top">
+          <div class="card-label">Totale<br>Speso</div>
+          <div class="card-icon icon-orange">📈</div>
+        </div>
+        <div class="card-value" id="d-totale">€ 0</div>
+        <div class="card-sub" id="d-entries">0 registrazioni</div>
+      </div>
+      <div class="card">
+        <div class="card-top">
+          <div class="card-label">Consumo<br>Medio</div>
+          <div class="card-icon icon-green">⛽</div>
+        </div>
+        <div class="card-value" id="d-consumo">—</div>
+        <div class="card-sub" id="d-litri-tot">— L totali</div>
+      </div>
+      <div class="card">
+        <div class="card-top">
+          <div class="card-label">Costo<br>per Km</div>
+          <div class="card-icon icon-purple">🏎️</div>
+        </div>
+        <div class="card-value" id="d-costkm">—</div>
+        <div class="card-sub" id="d-km-tot">— km percorsi</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-title">Spese Mensili</div>
+      <canvas id="chartMensile"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-title">Ripartizione Spese</div>
+      <div class="donut-wrap">
+        <canvas id="chartDonut" style="max-height:190px;max-width:190px;"></canvas>
+        <div class="donut-legend" id="donut-legend"></div>
+      </div>
+    </div>
+
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-top">
+          <div class="card-label">Rifornimenti<br>Benzina</div>
+          <div class="card-icon icon-blue">⛽</div>
+        </div>
+        <div class="card-value" id="d-count-fuel">0</div>
+        <div class="card-sub" id="d-sum-fuel">€ 0</div>
+      </div>
+      <div class="card">
+        <div class="card-top">
+          <div class="card-label">Spese<br>Manutenzione</div>
+          <div class="card-icon icon-green">🔧</div>
+        </div>
+        <div class="card-value" id="d-count-man">0</div>
+        <div class="card-sub" id="d-sum-man">€ 0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BENZINA -->
+  <div class="page" id="page-benzina">
+    <div class="page-title">Benzina</div>
+    <div class="page-sub">Registra un nuovo rifornimento</div>
+    <div class="form-card">
+      <div class="form-section-title">Nuovo Rifornimento</div>
+      <div class="field-row">
+        <div class="field"><label>Km attuali</label><input type="number" id="f-km" placeholder="es. 45820"></div>
+        <div class="field"><label>Data</label><input type="date" id="f-date"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Importo (€)</label><input type="number" id="f-cost" placeholder="es. 65.00" step="0.01"></div>
+        <div class="field"><label>Litri</label><input type="number" id="f-liters" placeholder="es. 38.5" step="0.01"></div>
+      </div>
+      <button class="btn-primary" onclick="saveFuel()">Aggiungi Rifornimento</button>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Prezzo €/Litro nel tempo</div>
+      <canvas id="chartPrezzoL"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Consumi km/L nel tempo</div>
+      <canvas id="chartKmL"></canvas>
+    </div>
+  </div>
+
+  <!-- MANUTENZIONE -->
+  <div class="page" id="page-manutenzione">
+    <div class="page-title">Manutenzione</div>
+    <div class="page-sub">Registra spese di manutenzione e altri costi</div>
+    <div class="form-card">
+      <div class="form-section-title">Nuova Spesa</div>
+      <div class="field"><label>Descrizione</label><input type="text" id="m-desc" placeholder="es. Tagliando, Gomme, Autolavaggio..."></div>
+      <div class="field-row">
+        <div class="field"><label>Km attuali</label><input type="number" id="m-km" placeholder="es. 45820"></div>
+        <div class="field"><label>Data</label><input type="date" id="m-date"></div>
+      </div>
+      <div class="field"><label>Importo (€)</label><input type="number" id="m-cost" placeholder="es. 120.00" step="0.01"></div>
+      <button class="btn-primary" onclick="saveMaint()">Aggiungi Spesa</button>
+    </div>
+  </div>
+
+  <!-- STORICO -->
+  <div class="page" id="page-storico">
+    <div class="page-title">Storico</div>
+    <div class="page-sub">Tutte le registrazioni</div>
+    <div class="storico-toolbar">
+      <div class="storico-info" id="storico-count">0 registrazioni</div>
+      <div class="toolbar-actions">
+        <button class="btn-sm success" onclick="exportData()">⬇ Backup</button>
+        <button class="btn-sm" onclick="document.getElementById('importFile').click()">⬆ Ripristina</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+        <button class="btn-sm danger" onclick="clearAll()">🗑</button>
+      </div>
+    </div>
+    <div class="entry-list" id="entry-list"></div>
+  </div>
+
+  <!-- BACKUP -->
+  <div class="page" id="page-backup">
+    <div class="page-title">Backup</div>
+    <div class="page-sub">Salva e ripristina i tuoi dati</div>
+    <div class="form-card">
+      <div class="form-section-title">Esporta Dati</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6;">
+        Scarica un file <strong>.json</strong> con tutte le registrazioni. Salvalo su iCloud o Google Drive come backup sicuro.
+      </p>
+      <button class="btn-primary" onclick="exportData()">⬇ Scarica Backup</button>
+    </div>
+    <div class="form-card">
+      <div class="form-section-title">Ripristina Dati</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6;">
+        Carica un backup precedente. <strong>Attenzione:</strong> i dati attuali verranno sostituiti.
+      </p>
+      <button class="btn-primary" style="background:#6b7280;" onclick="document.getElementById('importFile2').click()">⬆ Carica Backup</button>
+      <input type="file" id="importFile2" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let db = JSON.parse(localStorage.getItem('carlog_v3')) || [];
+let charts = {};
+
+// Set today's date
+['f-date','m-date'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.value = new Date().toISOString().split('T')[0];
+});
+
+// NAVIGATION
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+function goTo(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  btn.classList.add('active');
+  closeSidebar();
+  if (page === 'dashboard') renderDashboard();
+  if (page === 'benzina') renderFuelCharts();
+  if (page === 'storico') renderStorico();
+}
+
+// SAVE
+function save() { localStorage.setItem('carlog_v3', JSON.stringify(db)); }
+
+function saveFuel() {
+  const km     = parseFloat(document.getElementById('f-km').value);
+  const cost   = parseFloat(document.getElementById('f-cost').value);
+  const liters = parseFloat(document.getElementById('f-liters').value);
+  const date   = document.getElementById('f-date').value;
+  if (!km || !cost || !liters || !date) return showToast('⚠ Compila tutti i campi');
+  db.push({ id: Date.now(), type: 'Carburante', km, cost, liters, date,
+    pricePerLiter: cost/liters, desc: 'Benzina' });
+  db.sort((a,b) => new Date(a.date)-new Date(b.date));
+  save();
+  ['f-km','f-cost','f-liters'].forEach(id => document.getElementById(id).value = '');
+  showToast('✓ Rifornimento salvato!');
+  renderFuelCharts();
+  renderDashboard();
+}
+
+function saveMaint() {
+  const km   = parseFloat(document.getElementById('m-km').value);
+  const cost = parseFloat(document.getElementById('m-cost').value);
+  const date = document.getElementById('m-date').value;
+  const desc = document.getElementById('m-desc').value.trim();
+  if (!km || !cost || !date || !desc) return showToast('⚠ Compila tutti i campi');
+  db.push({ id: Date.now(), type: 'Manutenzione', km, cost, liters: 0, date,
+    pricePerLiter: 0, desc });
+  db.sort((a,b) => new Date(a.date)-new Date(b.date));
+  save();
+  ['m-km','m-cost','m-desc'].forEach(id => document.getElementById(id).value = '');
+  showToast('✓ Spesa salvata!');
+  renderDashboard();
+}
+
+function deleteEntry(id) {
+  db = db.filter(e => e.id !== id);
+  save(); renderStorico(); renderDashboard();
+}
+
+function clearAll() {
+  if (!confirm('Cancellare tutti i dati?')) return;
+  db = []; save(); renderStorico(); renderDashboard();
+}
+
+// CONSUMI
+function getConsumi() {
+  const fuel = db.filter(e => e.type==='Carburante').sort((a,b)=>new Date(a.date)-new Date(b.date));
+  return fuel.map((e,i) => {
+    if (i===0) return {...e, kml:null, l100:null};
+    const prev = fuel[i-1];
+    const delta = e.km - prev.km;
+    if (delta<=0 || e.liters<=0) return {...e, kml:null, l100:null};
+    return {...e, kml: delta/e.liters, l100: (e.liters/delta)*100};
+  });
+}
+
+// DASHBOARD
+function renderDashboard() {
+  const now = new Date();
+  const cy = now.getFullYear(), cm = now.getMonth();
+  const thisMonth = db.filter(e => { const d=new Date(e.date+'T12:00:00'); return d.getFullYear()===cy && d.getMonth()===cm; });
+  const lastMonth = db.filter(e => { const d=new Date(e.date+'T12:00:00'); const lm=new Date(cy,cm-1,1); return d.getFullYear()===lm.getFullYear() && d.getMonth()===lm.getMonth(); });
+
+  const sumThis  = thisMonth.reduce((s,e)=>s+e.cost,0);
+  const sumLast  = lastMonth.reduce((s,e)=>s+e.cost,0);
+  const totalCost= db.reduce((s,e)=>s+e.cost,0);
+  const totalLit = db.filter(e=>e.type==='Carburante').reduce((s,e)=>s+e.liters,0);
+
+  document.getElementById('d-mese').textContent    = '€ '+sumThis.toFixed(2);
+  document.getElementById('d-totale').textContent  = '€ '+totalCost.toFixed(2);
+  document.getElementById('d-entries').textContent = db.length+' registrazioni';
+  document.getElementById('d-litri-tot').textContent = totalLit.toFixed(1)+' L totali';
+
+  const tEl = document.getElementById('d-mese-trend');
+  if (sumLast>0) {
+    const pct = ((sumThis-sumLast)/sumLast*100).toFixed(1);
+    tEl.style.display='block';
+    tEl.textContent=(pct>0?'↑ ':'↓ ')+Math.abs(pct)+'% vs mese scorso';
+    tEl.className=pct>0?'card-trend-up':'card-trend-down';
+  } else { tEl.style.display='none'; }
+
+  const consumi = getConsumi().filter(e=>e.kml!==null);
+  if (consumi.length>0) {
+    const avgL100=consumi.reduce((s,e)=>s+e.l100,0)/consumi.length;
+    document.getElementById('d-consumo').textContent=avgL100.toFixed(1)+' L/100km';
+  }
+
+  const kms = db.map(e=>e.km);
+  if (kms.length>=2) {
+    const totKm=Math.max(...kms)-Math.min(...kms);
+    document.getElementById('d-km-tot').textContent=totKm.toLocaleString('it')+' km percorsi';
+    if (totKm>0) document.getElementById('d-costkm').textContent='€ '+(totalCost/totKm).toFixed(3);
+  }
+
+  const fuelE=db.filter(e=>e.type==='Carburante');
+  const manE =db.filter(e=>e.type==='Manutenzione');
+  document.getElementById('d-count-fuel').textContent=fuelE.length;
+  document.getElementById('d-sum-fuel').textContent='€ '+fuelE.reduce((s,e)=>s+e.cost,0).toFixed(2);
+  document.getElementById('d-count-man').textContent=manE.length;
+  document.getElementById('d-sum-man').textContent='€ '+manE.reduce((s,e)=>s+e.cost,0).toFixed(2);
+
+  renderDashboardCharts();
+}
+
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function renderDashboardCharts() {
+  const mFuel={}, mMan={};
+  db.forEach(e => {
+    const d=new Date(e.date+'T12:00:00');
+    const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if (e.type==='Carburante') mFuel[k]=(mFuel[k]||0)+e.cost;
+    else mMan[k]=(mMan[k]||0)+e.cost;
+  });
+  const allM=[...new Set([...Object.keys(mFuel),...Object.keys(mMan)])].sort();
+  const scX={ticks:{color:'#9ca3af',font:{size:10}},grid:{display:false}};
+  const scY={ticks:{color:'#9ca3af',font:{size:10}},grid:{color:'#f3f4f6'}};
+
+  destroyChart('chartMensile');
+  if (allM.length>0) {
+    charts['chartMensile']=new Chart(document.getElementById('chartMensile').getContext('2d'),{
+      type:'bar',
+      data:{
+        labels:allM.map(m=>{const[y,mo]=m.split('-');return`${mo}/${y.slice(2)}`;}),
+        datasets:[
+          {label:'Benzina',data:allM.map(m=>(mFuel[m]||0).toFixed(2)),backgroundColor:'#4a7fa5',borderRadius:5},
+          {label:'Manutenzione',data:allM.map(m=>(mMan[m]||0).toFixed(2)),backgroundColor:'#4a9680',borderRadius:5}
+        ]
+      },
+      options:{responsive:true,plugins:{legend:{labels:{font:{size:11},color:'#6b7280'}}},scales:{x:{...scX,stacked:true},y:{...scY,stacked:true}}}
+    });
+  }
+
+  destroyChart('chartDonut');
+  const sF=db.filter(e=>e.type==='Carburante').reduce((s,e)=>s+e.cost,0);
+  const sM=db.filter(e=>e.type==='Manutenzione').reduce((s,e)=>s+e.cost,0);
+  const legEl=document.getElementById('donut-legend');
+  if (sF>0||sM>0) {
+    charts['chartDonut']=new Chart(document.getElementById('chartDonut').getContext('2d'),{
+      type:'doughnut',
+      data:{labels:['Benzina','Manutenzione'],datasets:[{data:[sF.toFixed(2),sM.toFixed(2)],backgroundColor:['#4a7fa5','#4a9680'],borderWidth:0,hoverOffset:6}]},
+      options:{responsive:true,cutout:'65%',plugins:{legend:{display:false}}}
+    });
+    legEl.innerHTML=`
+      <div class="legend-item"><div class="legend-dot" style="background:#4a7fa5"></div>Benzina <strong>€ ${sF.toFixed(2)}</strong></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#4a9680"></div>Manutenzione <strong>€ ${sM.toFixed(2)}</strong></div>`;
+  } else {
+    legEl.innerHTML='<div style="color:var(--text3);font-size:13px;padding:20px 0">Nessun dato ancora</div>';
+  }
+}
+
+// FUEL CHARTS
+function renderFuelCharts() {
+  const allFuel=db.filter(e=>e.type==='Carburante'&&e.pricePerLiter>0).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const consumi=getConsumi().filter(e=>e.kml!==null);
+  const sc={x:{ticks:{color:'#9ca3af',font:{size:10}},grid:{display:false}},y:{ticks:{color:'#9ca3af',font:{size:10}},grid:{color:'#f3f4f6'}}};
+
+  destroyChart('chartPrezzoL');
+  if (allFuel.length>0) {
+    charts['chartPrezzoL']=new Chart(document.getElementById('chartPrezzoL').getContext('2d'),{
+      type:'line',
+      data:{labels:allFuel.map(e=>new Date(e.date+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})),
+        datasets:[{data:allFuel.map(e=>e.pricePerLiter.toFixed(3)),borderColor:'#4a7fa5',backgroundColor:'rgba(74,127,165,0.08)',tension:0.3,fill:true,pointRadius:4,pointBackgroundColor:'#4a7fa5'}]},
+      options:{responsive:true,plugins:{legend:{display:false}},scales:sc}
+    });
+  }
+
+  destroyChart('chartKmL');
+  if (consumi.length>0) {
+    charts['chartKmL']=new Chart(document.getElementById('chartKmL').getContext('2d'),{
+      type:'line',
+      data:{labels:consumi.map(e=>new Date(e.date+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})),
+        datasets:[{data:consumi.map(e=>e.kml.toFixed(2)),borderColor:'#4a9680',backgroundColor:'rgba(74,150,128,0.08)',tension:0.3,fill:true,pointRadius:4,pointBackgroundColor:'#4a9680'}]},
+      options:{responsive:true,plugins:{legend:{display:false}},scales:sc}
+    });
+  }
+}
+
+// STORICO
+function renderStorico() {
+  const consumiMap={};
+  getConsumi().forEach(e=>consumiMap[e.id]=e);
+  const sorted=[...db].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('storico-count').textContent=db.length+' registrazioni';
+  const list=document.getElementById('entry-list');
+
+  if (db.length===0) {
+    list.innerHTML='<div class="empty-state"><div class="es-icon">📭</div><div class="es-text">Nessuna registrazione ancora</div></div>';
+    return;
+  }
+
+  list.innerHTML=sorted.map(e=>{
+    const c=consumiMap[e.id];
+    const isFuel=e.type==='Carburante';
+    const icon=isFuel?'⛽':'🔧';
+    const iconBg=isFuel?'icon-blue':'icon-green';
+    const dateStr=new Date(e.date+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'});
+    const meta=isFuel?`${dateStr} · ${e.km.toLocaleString('it')} km · ${e.liters}L · €${e.pricePerLiter.toFixed(3)}/L`:`${dateStr} · ${e.km.toLocaleString('it')} km`;
+    const cons=(isFuel&&c&&c.kml)?`⚡ ${c.kml.toFixed(2)} km/L · ${c.l100.toFixed(1)} L/100km`:'';
+    return `<div class="entry-card">
+      <div class="entry-icon ${iconBg}">${icon}</div>
+      <div class="entry-body">
+        <div class="entry-title">${e.desc||e.type}</div>
+        <div class="entry-meta">${meta}</div>
+        ${cons?`<div class="entry-consumi">${cons}</div>`:''}
+      </div>
+      <div class="entry-right">
+        <div class="entry-cost">€ ${e.cost.toFixed(2)}</div>
+      </div>
+      <button class="entry-delete" onclick="deleteEntry(${e.id})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// BACKUP
+function exportData() {
+  if (db.length===0) return showToast('⚠ Nessun dato da esportare');
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`rebecca_carlog_${new Date().toISOString().split('T')[0]}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+  showToast('✓ Backup scaricato!');
+}
+
+function importData(event) {
+  const file=event.target.files[0]; if (!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try {
+      const imp=JSON.parse(e.target.result);
+      if (!Array.isArray(imp)) throw new Error();
+      if (!confirm(`Trovate ${imp.length} registrazioni. Sostituire i dati attuali?`)) return;
+      db=imp; save(); renderDashboard(); renderStorico();
+      showToast(`✓ ${imp.length} registrazioni importate!`);
+    } catch { showToast('⚠ File non valido'); }
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+// CAR PHOTO
+function loadCarPhoto(event) {
+  const file=event.target.files[0]; if (!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    localStorage.setItem('carlog_photo',e.target.result);
+    showCarPhoto(e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+function showCarPhoto(dataUrl) {
+  const img=document.getElementById('carPhotoImg');
+  img.src=dataUrl; img.style.display='block';
+  document.getElementById('carPhotoIcon').style.display='none';
+}
+
+// TOAST
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+// INIT
+const savedPhoto=localStorage.getItem('carlog_photo');
+if (savedPhoto) showCarPhoto(savedPhoto);
+renderDashboard();
+renderStorico();
+</script>
+</body>
+</html>
